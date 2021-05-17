@@ -1,4 +1,5 @@
-import React from 'react';
+// import AsyncStorage from '@react-native-community/async-storage';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +7,44 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function Book({ navigation }) {
+  const [title, setTitle] = useState();
+  const [description, setDescription] = useState();
+  const [photo, setPhoto] = useState();
+
+  const isValid = () => {
+    if (title !== undefined && title !== '') {
+      return true;
+    }
+    return false;
+  };
+
+  const onSave = async () => {
+    console.log(`Title ${title}`);
+    console.log(`Description ${description}`);
+
+    if (isValid()) {
+      console.log('Válido!');
+
+      const id = 1;
+      const data = {
+        id,
+        title,
+        description,
+        photo,
+      };
+
+      await AsyncStorage.setItem('books', JSON.stringify(data));
+      navigation.goBack();
+    } else {
+      console.log('Inválido!');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Inclua seu novo livro</Text>
@@ -19,6 +54,10 @@ export default function Book({ navigation }) {
           style={styles.inputText}
           placeholder="Título"
           placeholderTextColor="#2c3e50"
+          value={title}
+          onChangeText={(text) => {
+            setTitle(text);
+          }}
         />
         <TextInput
           style={styles.inputText}
@@ -27,6 +66,10 @@ export default function Book({ navigation }) {
           multiline={true}
           numberOfLines={4}
           maxLength={190}
+          value={description}
+          onChangeText={(text) => {
+            setDescription(text);
+          }}
         />
       </View>
       <View style={styles.footer}>
@@ -34,14 +77,20 @@ export default function Book({ navigation }) {
           <Icon name="photo-camera" size={36} style={{ color: '#fff' }} />
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.saveButton}
+          style={[
+            styles.saveButton,
+            !isValid() ? styles.saveButtonInvalid : '',
+          ]}
+          onPress={onSave}
+        >
+          <Text style={styles.saveButtonText}>Cadastrar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.cancelButton}
           onPress={() => {
             navigation.goBack();
           }}
         >
-          <Text style={styles.saveButtonText}>Cadastrar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cancelButton}>
           <Text style={styles.cancelButtonText}>Cancelar</Text>
         </TouchableOpacity>
       </View>
@@ -61,6 +110,8 @@ const styles = StyleSheet.create({
   inputText: {
     borderBottomWidth: 1,
     borderColor: '#f39c12',
+    padding: 5,
+    marginBottom: 20,
   },
   footer: {
     // marginTop: '40%',
@@ -84,6 +135,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 6,
     width: '80%',
+  },
+  saveButtonInvalid: {
+    opacity: 0.5,
   },
   saveButtonText: {
     color: '#fff',
