@@ -12,13 +12,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 export default function Main({ navigation }) {
-  const [books, setBooks] = useState();
+  const [books, setBooks] = useState([]);
 
   useEffect(() => {
     AsyncStorage.getItem('books').then((data) => {
       const book = JSON.parse(data);
-
-      setBooks([book]);
+      setBooks(book);
     });
   }, []);
 
