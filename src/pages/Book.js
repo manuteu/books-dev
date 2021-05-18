@@ -5,16 +5,33 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Modal,
+  AsyncStorage,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-export default function Book({ navigation }) {
+import Photo from '../components/Photo';
+import Camera from '../components/Camera';
+
+const Book = ({ navigation }) => {
+  const book = navigation.getParam('book', {
+    title: '',
+    description: '',
+    read: false,
+    photo: '',
+  });
+
+  const isEdit = navigation.getParam('isEdit', false);
+
   const [books, setBooks] = useState([]);
-  const [title, setTitle] = useState();
-  const [description, setDescription] = useState();
-  const [photo, setPhoto] = useState();
+  const [title, setTitle] = useState(book.title);
+  const [description, setDescription] = useState(book.description);
+  const [read, setRead] = useState(book.read);
+  const [photo, setPhoto] = useState(book.photo);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem('books').then((data) => {
@@ -34,129 +51,154 @@ export default function Book({ navigation }) {
   };
 
   const onSave = async () => {
-    console.log(`Title ${title}`);
-    console.log(`Description ${description}`);
-
     if (isValid()) {
-      console.log('Válido!');
+      if (isEdit) {
+        // altera o livro corrente
+        let newBooks = books;
 
-      const id = Math.random(5000).toString();
-      const data = {
-        id,
-        title,
-        description,
-        photo,
-      };
+        newBooks.map((item) => {
+          if (item.id === book.id) {
+            item.title = title;
+            item.description = description;
+            item.read = read;
+            item.photo = photo;
+          }
+          return item;
+        });
 
-      books.push(data);
+        console.log('books', books);
+        console.log('newBooks', newBooks);
 
-      console.log(JSON.stringify(data));
-      await AsyncStorage.setItem('books', JSON.stringify(books));
+        await AsyncStorage.setItem('books', JSON.stringify(newBooks));
+      } else {
+        // adiciona um novo livro
+        const id = Math.random(5000).toString();
+        const data = {
+          id,
+          title,
+          description,
+          photo,
+        };
+
+        books.push(data);
+        await AsyncStorage.setItem('books', JSON.stringify(books));
+      }
+
       navigation.goBack();
     } else {
       console.log('Inválido!');
     }
   };
 
+  const onCloseModal = () => setIsModalVisible(false);
+
+  const onChangePhoto = (newPhoto) => setPhoto(newPhoto);
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Inclua seu novo livro</Text>
+      <Text style={styles.pageTitle}>Inclua seu novo livro...</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Título"
+        value={title}
+        onChangeText={(text) => {
+          setTitle(text);
+        }}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Descrição"
+        multiline={true}
+        numberOfLines={4}
+        value={description}
+        onChangeText={(text) => {
+          setDescription(text);
+        }}
+      />
 
-      <View style={styles.inputs}>
-        <TextInput
-          style={styles.inputText}
-          placeholder="Título"
-          placeholderTextColor="#2c3e50"
-          value={title}
-          onChangeText={(text) => {
-            setTitle(text);
-          }}
-        />
-        <TextInput
-          style={styles.inputText}
-          placeholder="Descrição"
-          placeholderTextColor="#2c3e50"
-          multiline={true}
-          numberOfLines={4}
-          maxLength={190}
-          value={description}
-          onChangeText={(text) => {
-            setDescription(text);
-          }}
-        />
-      </View>
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.camera}>
-          <Icon name="photo-camera" size={36} style={{ color: '#fff' }} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            !isValid() ? styles.saveButtonInvalid : '',
-          ]}
-          onPress={onSave}
-        >
-          <Text style={styles.saveButtonText}>Cadastrar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => {
-            navigation.goBack();
-          }}
-        >
-          <Text style={styles.cancelButtonText}>Cancelar</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.cameraButton}
+        onPress={() => {
+          setIsModalVisible(true);
+        }}
+      >
+        <Icon name="photo-camera" size={18} color="#fff" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.saveButton, !isValid() ? styles.saveButtonInvalid : '']}
+        onPress={onSave}
+      >
+        <Text style={styles.saveButtonText}>
+          {isEdit ? 'Atualizar' : 'Cadastrar'}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.cancelButton}
+        onPress={() => {
+          navigation.goBack();
+        }}
+      >
+        <Text style={styles.cancelButtonText}>Cancelar</Text>
+      </TouchableOpacity>
+
+      <Modal animationType="slide" visible={isModalVisible}>
+        {photo ? (
+          <Photo
+            photo={photo}
+            onDeletePhoto={onChangePhoto}
+            onClosePicture={onCloseModal}
+          />
+        ) : (
+          <Camera onCloseCamera={onCloseModal} onTakePicture={onChangePhoto} />
+        )}
+      </Modal>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
+    padding: 10,
+    paddingTop: Constants.statusBarHeight,
   },
-  header: {},
-  inputs: {
-    marginTop: '50%',
+  pageTitle: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginBottom: '20%',
   },
-  inputText: {
+  input: {
+    fontSize: 16,
+    borderBottomColor: '#f39c12',
     borderBottomWidth: 1,
-    borderColor: '#f39c12',
-    padding: 5,
-    marginBottom: 20,
+    marginBottom: '10%',
   },
-  footer: {
-    // marginTop: '40%',
-    paddingVertical: '20%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  camera: {
+  cameraButton: {
     backgroundColor: '#f39c12',
     borderRadius: 50,
-    width: 65,
-    height: 65,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   saveButton: {
     backgroundColor: '#f39c12',
     alignSelf: 'center',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
     marginBottom: 20,
-    padding: 10,
-    borderRadius: 6,
-    width: '80%',
   },
   saveButtonInvalid: {
     opacity: 0.5,
   },
   saveButtonText: {
     color: '#fff',
-    textAlign: 'center',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   cancelButton: {
     alignSelf: 'center',
@@ -165,3 +207,5 @@ const styles = StyleSheet.create({
     color: '#95a5a6',
   },
 });
+
+export default Book;
