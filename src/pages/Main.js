@@ -5,10 +5,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  AsyncStorage,
+  // AsyncStorage,
 } from 'react-native';
 
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   },
   toolbox: {
     flexDirection: 'row',
-    marginBottom: 5,
+    marginBottom: '10%',
   },
   title: {
     flex: 1,
@@ -117,6 +117,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   itemsContainer: {
+    marginTop: 10,
     flexDirection: 'row',
     borderBottomWidth: 1,
     borderBottomColor: '#d7dd75',

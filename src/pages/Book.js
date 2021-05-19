@@ -6,9 +6,10 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  AsyncStorage,
+  // AsyncStorage,
 } from 'react-native';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import Constants from 'expo-constants';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
